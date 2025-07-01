@@ -1,4 +1,12 @@
 from crewai import Agent
+from crewai.llm import OpenAI
+
+llm = OpenAI(
+    base_url="http://localhost:11434/v1",
+    api_key="ollama",
+    model="llama3:latest"
+)
+
 
 business_coordinator_agent = Agent(
     role="Business Coordinator Agent (व्यापार समन्वयक एजेंट)",

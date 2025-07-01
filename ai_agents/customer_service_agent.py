@@ -1,4 +1,12 @@
 from crewai import Agent
+from crewai.llm import OpenAI
+
+llm = OpenAI(
+    base_url="http://localhost:11434/v1",
+    api_key="ollama",
+    model="llama3:latest"
+)
+
 
 customer_service_agent = Agent(
     role="Customer Service Agent (ग्राहक सेवा एजेंट)",
