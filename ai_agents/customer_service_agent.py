@@ -14,3 +14,5 @@ customer_service_agent = Agent(
     ),
     tools=[]
 )
+# This agent is designed to handle customer service inquiries for small businesses in India.
+# It will always respond in the language chosen by the user at the beginning of the conversation, ensuring effective communication.
