@@ -1,4 +1,12 @@
 from crewai import Agent
+from crewai.llm import OpenAI
+
+llm = OpenAI(
+    base_url="http://localhost:11434/v1",
+    api_key="ollama",
+    model="llama3:latest"
+)
+
 
 inventory_manager_agent = Agent(
     role="Inventory Manager Agent (इन्वेंट्री प्रबंधक एजेंट)",
