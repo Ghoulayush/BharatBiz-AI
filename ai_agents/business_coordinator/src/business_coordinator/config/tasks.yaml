@@ -1,0 +1,39 @@
+coordinator_task:
+  description: >
+    Review the provided business profile for {topic} and deliver a holistic, integrated
+    business strategy covering sales, marketing, and operations. Ensure that your
+    recommendations are aligned with the overall business goals and that you highlight
+    cross-functional synergies wherever possible.
+  expected_output: >
+    A concise business plan with clear recommendations across sales, marketing, and operations,
+    tailored for {topic}.
+  agent: business_coordinator
+
+sales_task:
+  description: >
+    Analyze the sales data and patterns for {topic}. Identify revenue opportunities, sales
+    bottlenecks, and product performance issues. Suggest specific tactics to increase conversion
+    rates and customer lifetime value.
+  expected_output: >
+    A prioritized list of actionable sales strategies, with supporting data or reasoning.
+  agent: sales_analyst
+
+marketing_task:
+  description: >
+    Evaluate the current marketing strategies for {topic}, including campaigns, channels,
+    messaging, and audience segmentation. Recommend improvements in campaign ROI and
+    brand positioning.
+  expected_output: >
+    A marketing recommendations report with practical steps to improve audience targeting
+    and campaign effectiveness.
+  agent: marketing_specialist
+
+operations_task:
+  description: >
+    Examine the operational processes for {topic}. Look for bottlenecks, inefficiencies, or
+    high-cost activities. Recommend process improvements or supply chain enhancements to
+    drive greater efficiency and productivity.
+  expected_output: >
+    An operational improvement plan highlighting critical areas for optimization, with a
+    practical roadmap for implementation.
+  agent: operations_optimizer
