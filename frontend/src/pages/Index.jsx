@@ -97,6 +97,7 @@ const Index = () => {
               <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 transition-colors">Dashboard</Link>
               <Link to="/inventory-manager" className="text-gray-700 hover:text-orange-600 transition-colors">Inventory</Link>
               <Link to="/business-coordinator" className="text-gray-700 hover:text-orange-600 transition-colors">Analytics</Link>
+              <Link to="/login" className="text-gray-700 hover:text-orange-600 transition-colors">Login</Link>
               <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700">
                 Try Free | मुफ्त आज़माएं
               </Button>
@@ -123,6 +124,7 @@ const Index = () => {
                 <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 transition-colors">Dashboard</Link>
                 <Link to="/inventory-manager" className="text-gray-700 hover:text-orange-600 transition-colors">Inventory Manager</Link>
                 <Link to="/business-coordinator" className="text-gray-700 hover:text-orange-600 transition-colors">Business Coordinator</Link>
+                <Link to="/login" className="text-gray-700 hover:text-orange-600 transition-colors">Login</Link>
                 <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 w-full">
                   Try Free | मुफ्त आज़माएं
                 </Button>
@@ -168,7 +170,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* AI Agents Preview - Updated with clickable cards */}
+      {/* AI Agents Preview */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
@@ -326,6 +328,7 @@ const Index = () => {
                 <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
                 <li><Link to="/inventory-manager" className="hover:text-white transition-colors">Inventory Manager</Link></li>
                 <li><Link to="/business-coordinator" className="hover:text-white transition-colors">Business Coordinator</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Login</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
               </ul>
             </div>

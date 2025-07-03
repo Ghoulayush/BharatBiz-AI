@@ -1,29 +1,27 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  Send, 
-  Phone, 
-  Search, 
-  Settings, 
-  MessageCircle, 
-  Package, 
-  BarChart3,
+import {
+  Send,
+  Phone,
+  Search,
+  Settings,
   Menu,
   Globe,
-  ArrowLeft // ✅ added for back icon
+  ArrowLeft
 } from "lucide-react";
-import { Link } from "react-router-dom"; // ✅ added for routing
+import { Link } from "react-router-dom";
 
-const Chat = () => {
+export default function Chat({ token }) {
   const [selectedCustomer, setSelectedCustomer] = useState(0);
   const [message, setMessage] = useState("");
   const [language, setLanguage] = useState("en");
   const [isTyping, setIsTyping] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const customers = [
     {
@@ -58,7 +56,34 @@ const Chat = () => {
     }
   ];
 
-  const messages = [
+  const agents = [
+    {
+      id: "customer-service",
+      name: "Customer Service",
+      nameHindi: "ग्राहक सेवा",
+      avatar: "👩‍💼",
+      color: "bg-green-500",
+      status: "online"
+    },
+    {
+      id: "inventory",
+      name: "Inventory Manager",
+      nameHindi: "स्टॉक मैनेजर",
+      avatar: "📦",
+      color: "bg-orange-500",
+      status: "online"
+    },
+    {
+      id: "business",
+      name: "Business Coordinator",
+      nameHindi: "व्यापार समन्वयक",
+      avatar: "📊",
+      color: "bg-blue-500",
+      status: "online"
+    }
+  ];
+
+  const initialMessages = [
     {
       id: 1,
       sender: "customer",
@@ -93,52 +118,66 @@ const Chat = () => {
     }
   ];
 
-  const agents = [
-    {
-      id: "customer-service",
-      name: "Customer Service",
-      nameHindi: "ग्राहक सेवा",
-      avatar: "👩‍💼",
-      color: "bg-green-500",
-      status: "online"
-    },
-    {
-      id: "inventory",
-      name: "Inventory Manager",
-      nameHindi: "स्टॉक मैनेजर",
-      avatar: "📦",
-      color: "bg-orange-500",
-      status: "online"
-    },
-    {
-      id: "business",
-      name: "Business Coordinator",
-      nameHindi: "व्यापार समन्वयक",
-      avatar: "📊",
-      color: "bg-blue-500",
-      status: "online"
-    }
-  ];
+  const [chatMessages, setChatMessages] = useState(initialMessages);
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-      }, 2000);
-      setMessage("");
-    }
-  };
+  const messagesEndRef = useRef(null);
 
   const getAgentInfo = (agentId) => {
     return agents.find(agent => agent.id === agentId);
   };
 
+  const handleSendMessage = async () => {
+    if (message.trim()) {
+      const newMsg = {
+        id: chatMessages.length + 1,
+        sender: "customer",
+        text: message,
+        textEng: message,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        agent: null
+      };
+      setChatMessages([...chatMessages, newMsg]);
+      setMessage("");
+      setIsTyping(true);
+
+      try {
+        await axios.post("http://localhost:8000/chat", null, {
+          params: { message },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.error("Failed to send:", err);
+      }
+
+      setTimeout(() => {
+        setIsTyping(false);
+        // Remove this block if your backend replies back instead.
+        const botReply = {
+          id: chatMessages.length + 2,
+          sender: "agent",
+          text: "यह आपके संदेश के लिए एक ऑटो-उत्तर है।",
+          textEng: "This is an auto-reply to your message.",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          agent: "customer-service"
+        };
+        setChatMessages(prev => [...prev, botReply]);
+      }, 2000);
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, isTyping]);
+
+  const filteredCustomers = customers.filter(customer => {
+    const name = language === "hi" ? customer.name : customer.nameEng;
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar - Customer List */}
+      {/* Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -158,23 +197,23 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Search customers..."
               className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Agent Status */}
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-sm font-medium text-gray-600 mb-3">
             {language === "hi" ? "एजेंट स्थिति" : "Agent Status"}
           </h3>
           <div className="space-y-2">
-            {agents.map((agent) => (
+            {agents.map(agent => (
               <div key={agent.id} className="flex items-center space-x-3">
                 <div className={`w-2 h-2 rounded-full ${agent.status === 'online' ? 'bg-green-500' : 'bg-gray-300'}`} />
                 <span className="text-sm">
@@ -188,16 +227,15 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Customer List */}
         <ScrollArea className="flex-1">
           <div className="p-2">
-            {customers.map((customer, index) => (
+            {filteredCustomers.map((customer, index) => (
               <div
                 key={customer.id}
                 onClick={() => setSelectedCustomer(index)}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                  selectedCustomer === index 
-                    ? 'bg-orange-50 border-l-4 border-orange-500' 
+                  selectedCustomer === index
+                    ? 'bg-orange-50 border-l-4 border-orange-500'
                     : 'hover:bg-gray-50'
                 }`}
               >
@@ -238,9 +276,8 @@ const Chat = () => {
         </ScrollArea>
       </div>
 
-      {/* Main Chat Area */}
+      {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -255,10 +292,9 @@ const Chat = () => {
               </Avatar>
               <div>
                 <h3 className="font-semibold">
-                  {language === "hi" 
-                    ? customers[selectedCustomer]?.name 
-                    : customers[selectedCustomer]?.nameEng
-                  }
+                  {language === "hi"
+                    ? customers[selectedCustomer]?.name
+                    : customers[selectedCustomer]?.nameEng}
                 </h3>
                 <p className="text-sm text-gray-500">
                   {customers[selectedCustomer]?.status === 'online' ? 'Online' : 'Last seen 2 hours ago'}
@@ -276,10 +312,9 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((msg) => (
+            {chatMessages.map(msg => (
               <div
                 key={msg.id}
                 className={`flex ${msg.sender === 'customer' ? 'justify-end' : 'justify-start'}`}
@@ -288,10 +323,9 @@ const Chat = () => {
                   {msg.sender === 'agent' && (
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="text-sm font-medium text-gray-600">
-                        {language === "hi" 
-                          ? getAgentInfo(msg.agent)?.nameHindi 
-                          : getAgentInfo(msg.agent)?.name
-                        }
+                        {language === "hi"
+                          ? getAgentInfo(msg.agent)?.nameHindi
+                          : getAgentInfo(msg.agent)?.name}
                       </span>
                       <Badge className={`${getAgentInfo(msg.agent)?.color} text-white text-xs`}>
                         AI Agent
@@ -317,16 +351,14 @@ const Chat = () => {
                 </div>
               </div>
             ))}
-            
-            {/* Typing Indicator */}
             {isTyping && (
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-200 p-3 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                     </div>
                     <span className="text-sm text-gray-500">
                       {language === "hi" ? "एजेंट टाइप कर रहा है..." : "Agent is typing..."}
@@ -335,10 +367,10 @@ const Chat = () => {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
-        {/* Message Input */}
         <div className="bg-white border-t border-gray-200 p-4">
           <div className="flex items-center space-x-2">
             <Input
@@ -348,7 +380,7 @@ const Chat = () => {
               className="flex-1"
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             />
-            <Button 
+            <Button
               onClick={handleSendMessage}
               className="bg-orange-500 hover:bg-orange-600"
             >
@@ -357,10 +389,9 @@ const Chat = () => {
           </div>
           <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
             <span>
-              {language === "hi" 
-                ? "Enter दबाएं या Send बटन क्लिक करें" 
-                : "Press Enter or click Send button"
-              }
+              {language === "hi"
+                ? "Enter दबाएं या Send बटन क्लिक करें"
+                : "Press Enter or click Send button"}
             </span>
             <span>
               {language === "hi" ? "भाषा: हिंदी" : "Language: English"}
@@ -370,6 +401,5 @@ const Chat = () => {
       </div>
     </div>
   );
-};
-
-export default Chat;
+}
+// This code defines a chat interface for BharatBiz AI, allowing users to interact with customers and AI agents.
