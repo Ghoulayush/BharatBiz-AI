@@ -1,34 +1,35 @@
-# from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-# from sqlalchemy.orm import sessionmaker
-# from app.models.db_models import Base
-
-# DATABASE_URL = "sqlite+aiosqlite:///./bharatbiz.db"
-
-# engine = create_async_engine(DATABASE_URL, echo=True)
-# async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-# async def init_db():
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.create_all)
-
-from app.models.db_models import Customer, Product
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from app.models.db_models import Base, Customer, Product
 from sqlalchemy import select
 
+DATABASE_URL = "sqlite+aiosqlite:///./bharatbiz.db"
+
+engine = create_async_engine(DATABASE_URL, echo=True)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+# Create tables
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await insert_sample_data()  # <-- This line calls the function below
+
+# Insert sample data (only once)
 async def insert_sample_data():
     async with async_session() as session:
-        # Check if products already exist
+        # Check if any product already exists
         result = await session.execute(select(Product))
         products_exist = result.scalars().first()
         if products_exist:
-            return  # Don't insert again
+            return  # Skip insertion if data already exists
 
-        # Sample customers
+        # Add sample customers
         customers = [
             Customer(name="Ravi Kumar", language="Hindi"),
             Customer(name="Anjali Shah", language="English"),
         ]
 
-        # Sample products
+        # Add sample products
         products = [
             Product(name="Basmati Rice", category="Grocery", quantity=50),
             Product(name="Fortune Oil", category="Grocery", quantity=30),
