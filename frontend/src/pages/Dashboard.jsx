@@ -150,6 +150,12 @@ const Dashboard = () => {
             >
               {language === "hi" ? "🎉 त्योहार मोड" : "🎉 Festival Mode"}
             </Button>
+            <Link to="/products">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                {language === "hi" ? "🛍️ उत्पाद देखें" : "🛍️ View Products"}
+              </Button>
+            </Link>
+
             <Button
               variant="ghost"
               onClick={() => setLanguage(language === "en" ? "hi" : "en")}
