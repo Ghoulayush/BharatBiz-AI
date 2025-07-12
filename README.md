@@ -96,7 +96,7 @@ We’ve laid a strong foundation with a modular architecture and are actively de
 ---
 ## WorkFlow
 
-![Architecture Diagram](assets\Untitled-2025-07-01-2204.png)
+![Architecture Diagram](assets/Untitled-2025-07-01-2204.png)
 
 ## 🎪 Upcoming Demo
 
