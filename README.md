@@ -45,6 +45,9 @@ As a result, business owners lose valuable time and customers, miss sales due to
 
 - ✅ *Real-Time Coordination*  
   WebSocket-based backend ensures fast, event-driven updates across all components.
+  
+- ✅ *Bilngual Communication*  
+  Hindi-English communication for business owners.
 
 ---
 
@@ -62,7 +65,7 @@ As a result, business owners lose valuable time and customers, miss sales due to
 ## 🚀 Built For
 
 ### 🏆 Code for Bharat — Season 2 Hackathon  
-*A mission to solve real-world problems for India’s grassroots entrepreneurs using technology.*
+*A mission to solve real-world problems for India’s grassroot entrepreneurs using technology.*
 
 We are targeting local grocery stores, retail outlets, and service providers with a solution that’s affordable, intelligent, and easy to use.
 
@@ -75,7 +78,6 @@ We’ve laid a strong foundation with a modular architecture and are actively de
 ### 🧩 Current Progress
 
 - ✅ *Frontend–Backend Integration Complete*  
-  Core business flows are already operational between the frontend and backend.
 
 - 🧠 *Business Coordinator Agent Working*  
   Acts as the central hub for managing business tasks and will soon connect with other agents.
@@ -92,10 +94,13 @@ We’ve laid a strong foundation with a modular architecture and are actively de
   Real-time communication layer using WebSockets is being refined for seamless agent interactions.
 
 ---
+## WorkFlow
+ ### AI-Agents:
+    <img width="1412" height="728" alt="Screenshot (666)" src="https://github.com/user-attachments/assets/83c38b26-ba4c-4f06-9bee-e9c2c0043d2a" />
 
 ## 🎪 Upcoming Demo
 
-> *Use Case: Local Kirana Store*
+> *Use Case: Local Kirana Stores*
 
 - Owner gets notified of low stock levels automatically
 - AI Coordinator delegates task to Inventory Agent to reorder
