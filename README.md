@@ -18,12 +18,19 @@ BharatBiz AI is a multi-agent intelligent system that automates core business fu
 - 📊 **Smart Insights**: Business analytics and demand forecasting
 
 
+## ✨ Working
+  **Backend** : 
+  **Frontend** :
+  **AI agents** :
+
 ## 🛠️ Tech Stack
 - **Backend**: FastAPI (Python)
 - **AI Agents**: CrewAI/LangChain + OpenAI GPT
 - **Frontend**: React.js + Tailwind CSS
 - **Database**: Firebase
 - **Real-time**: WebSockets
+
+## Future Work 🚀
 
 ## 🚀 Built For
 **Code For Bharat Season 2 Hackathon** - Solving real problems for Indian small businesses through technology innovation.
