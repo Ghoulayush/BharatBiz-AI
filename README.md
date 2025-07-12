@@ -95,8 +95,8 @@ We’ve laid a strong foundation with a modular architecture and are actively de
 
 ---
 ## WorkFlow
- ### AI-Agents:
-    <img width="1412" height="728" alt="Screenshot (666)" src="https://github.com/user-attachments/assets/83c38b26-ba4c-4f06-9bee-e9c2c0043d2a" />
+
+![Architecture Diagram](assets\Untitled-2025-07-01-2204.png)
 
 ## 🎪 Upcoming Demo
 
