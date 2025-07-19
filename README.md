@@ -55,7 +55,7 @@ As a result, business owners lose valuable time and customers, miss sales due to
 
 | Layer      | Technology                         |
 |------------|-------------------------------------|
-| AI Agents  | CrewAI / LangChain + OpenAI GPT     |
+| AI Agents  | CrewAI / LangChain + Groq     |
 | Backend    | FastAPI (Python)                    |
 | Frontend   | React.js + Tailwind CSS             |
 | Database   | Firebase                            |
