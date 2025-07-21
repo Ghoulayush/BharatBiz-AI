@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 import sys
+import os
+from dotenv import load_dotenv
+from pydantic import SecretStr
+from langchain_groq import ChatGroq
 from bharatbiz_ai_multi_agent_system_for_indian_smes.crew import BharatbizAiMultiAgentSystemForIndianSmesCrew
 
 # This main file is intended to be a way for your to run your
@@ -7,51 +11,27 @@ from bharatbiz_ai_multi_agent_system_for_indian_smes.crew import BharatbizAiMult
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+load_dotenv()  # Load environment variables from .env
+
 def run():
     """
     Run the crew.
     """
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables")
+
     inputs = {
-        
+        # Add your test inputs here
     }
+
+    llm = ChatGroq(
+        model="llama3-70b-8192",
+        api_key=SecretStr(groq_api_key),  # Now groq_api_key is guaranteed to be str, not None
+    )
+
     BharatbizAiMultiAgentSystemForIndianSmesCrew().crew().kickoff(inputs=inputs)
 
-
-def train():
-    """
-    Train the crew for a given number of iterations.
-    """
-    inputs = {
-        
-    }
-    try:
-        BharatbizAiMultiAgentSystemForIndianSmesCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
-
-    except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
-
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        BharatbizAiMultiAgentSystemForIndianSmesCrew().crew().replay(task_id=sys.argv[1])
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
-
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-    inputs = {
-        
-    }
-    try:
-        BharatbizAiMultiAgentSystemForIndianSmesCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
-
-    except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -61,12 +41,6 @@ if __name__ == "__main__":
     command = sys.argv[1]
     if command == "run":
         run()
-    elif command == "train":
-        train()
-    elif command == "replay":
-        replay()
-    elif command == "test":
-        test()
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
