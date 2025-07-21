@@ -1,0 +1,23 @@
+---
+bilingual_customer_support:
+  description: Detect the language of the user's query (Hindi or English) and provide
+    responses in the same language. Handle FAQs, order status, refunds, and queries
+    using Firebase data.
+  expected_output: Accurate and timely responses to customer queries in the appropriate
+    language, ensuring customer satisfaction.
+  async_execution: false
+  agent: customer_support_specialist
+business_operations_coordination:
+  description: Summarize sales reports and suggest operational strategies based on
+    Firebase data. Assist with scheduling tasks and reminders for the business owner.
+  expected_output: Comprehensive sales reports and actionable operational strategies
+    to enhance business efficiency.
+  async_execution: false
+  agent: business_coordinator
+inventory_monitoring_and_alerts:
+  description: Monitor inventory stock levels in real-time using Firebase data. Send
+    alerts or suggestions for restocking when inventory levels fall below thresholds.
+  expected_output: Timely alerts and restock suggestions to maintain optimal inventory
+    levels.
+  async_execution: false
+  agent: inventory_manager
