@@ -160,13 +160,11 @@ useEffect(() => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-700 hover:text-orange-600 transition-colors">Features</a>
               <Link to="/chat" className="text-gray-700 hover:text-orange-600 transition-colors">Chat Demo</Link>
-              <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 transition-colors">Dashboard</Link>
+              
               <Link to="/inventory-manager" className="text-gray-700 hover:text-orange-600 transition-colors">Inventory</Link>
               <Link to="/business-coordinator" className="text-gray-700 hover:text-orange-600 transition-colors">Analytics</Link>
               <Link to="/login" className="text-gray-700 hover:text-orange-600 transition-colors">Login</Link>
-              <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700">
-                Try Free | मुफ्त आज़माएं
-              </Button>
+             
             </div>
 
             <div className="md:hidden">
@@ -181,7 +179,7 @@ useEffect(() => {
               <div className="flex flex-col space-y-4">
                 <a href="#features" className="text-gray-700 hover:text-orange-600 transition-colors">Features</a>
                 <Link to="/chat" className="text-gray-700 hover:text-orange-600 transition-colors">Chat Demo</Link>
-                <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 transition-colors">Dashboard</Link>
+             
                 <Link to="/inventory-manager" className="text-gray-700 hover:text-orange-600 transition-colors">Inventory</Link>
                 <Link to="/business-coordinator" className="text-gray-700 hover:text-orange-600 transition-colors">Analytics</Link>
                 <Link to="/login" className="text-gray-700 hover:text-orange-600 transition-colors">Login</Link>
@@ -213,18 +211,7 @@ useEffect(() => {
           <p className="text-lg text-gray-500 mb-8 max-w-2xl mx-auto">
             An AI-powered platform that helps small Indian businesses manage customer service, inventory, and gain valuable business insights.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link to="/chat">
-              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-lg px-8 py-3">
-                Try BharatBiz Assistant Free
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button variant="outline" size="lg" className="border-orange-200 text-orange-700 hover:bg-orange-50 text-lg px-8 py-3">
-                View Dashboard Demo
-              </Button>
-            </Link>
-          </div>
+         
         </div>
       </section>
 
@@ -441,16 +428,7 @@ useEffect(() => {
           <p className="text-xl mb-8 opacity-90">
             Join thousands of Indian businesses already using BharatBiz AI Assistant
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/chat">
-              <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-8 py-3">
-                Start Free Trial | मुफ्त ट्रायल शुरू करें
-              </Button>
-            </Link>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-orange-600 text-lg px-8 py-3">
-              Schedule Demo | डेमो बुक करें
-            </Button>
-          </div>
+        
         </div>
       </section>
 
@@ -475,7 +453,7 @@ useEffect(() => {
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#features" className="hover:text-white">Features</a></li>
                 <li><Link to="/chat" className="hover:text-white">Chat Demo</Link></li>
-                <li><Link to="/dashboard" className="hover:text-white">Dashboard</Link></li>
+    
                 <li><Link to="/inventory-manager" className="hover:text-white">Inventory Manager</Link></li>
                 <li><Link to="/business-coordinator" className="hover:text-white">Business Coordinator</Link></li>
                 <li><Link to="/login" className="hover:text-white">Login</Link></li>
@@ -487,15 +465,15 @@ useEffect(() => {
               <ul className="space-y-2 text-gray-400">
                 <li className="flex items-center space-x-2">
                   <Phone className="w-4 h-4" />
-                  <span>+91 98765 43210</span>
+                  <span>+91 708 628 5040 </span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Mail className="w-4 h-4" />
-                  <span>support@bharatbiz.ai</span>
+                  <span>achyutshekhar54@gmail.com</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <MapPin className="w-4 h-4" />
-                  <span>Mumbai, India</span>
+                  <span>Dehradun, India</span>
                 </li>
               </ul>
             </div>

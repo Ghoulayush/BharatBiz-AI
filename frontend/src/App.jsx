@@ -47,7 +47,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import Dashboard from "./pages/Dashboard";
+
 import InventoryManager from "./pages/InventoryManager";
 import BusinessCoordinator from "./pages/BusinessCoordinator";
 import NotFound from "./pages/NotFound";
@@ -70,7 +70,6 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/inventory-manager" element={<InventoryManager />} />
             <Route path="/business-coordinator" element={<BusinessCoordinator />} />
             <Route path="/login" element={<Login setToken={setToken} />} />

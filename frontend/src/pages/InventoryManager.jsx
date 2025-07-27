@@ -14,7 +14,7 @@ import {
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Adjust this import path as necessary
+import { db } from "../firebase"; // Adjust import path if necessary
 
 const InventoryManager = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -24,16 +24,24 @@ const InventoryManager = () => {
     lowStockItems: [],
     recentActivity: [],
     topProducts: [],
+    todaysSales: "₹0",
   });
+  // Added minSellingPrice for new stock
   const [newStock, setNewStock] = useState({
     name: "",
     stock: "",
     minStock: "",
     category: "",
+    minSellingPrice: "",
   });
   const [showAddStockForm, setShowAddStockForm] = useState(false);
 
-  // Auth listener to get logged-in user
+  // States related to selling form
+  const [sellingItemIndex, setSellingItemIndex] = useState(null);
+  const [soldQuantity, setSoldQuantity] = useState("");
+  const [soldAmount, setSoldAmount] = useState("");
+
+  // Auth listener
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -42,7 +50,7 @@ const InventoryManager = () => {
     return unsubscribe;
   }, []);
 
-  // Fetch inventory data from Firestore for the logged-in user
+  // Fetch inventory data
   useEffect(() => {
     const fetchInventoryData = async () => {
       if (!user) {
@@ -58,13 +66,14 @@ const InventoryManager = () => {
             lowStockItems: data.lowStockItems || [],
             recentActivity: data.recentActivity || [],
             topProducts: data.topProducts || [],
+            todaysSales: data.todaysSales || "₹0",
           });
         } else {
-          // Document does not exist; initialize to empty arrays
           setInventoryData({
             lowStockItems: [],
             recentActivity: [],
             topProducts: [],
+            todaysSales: "₹0",
           });
         }
       } catch (error) {
@@ -76,7 +85,7 @@ const InventoryManager = () => {
     fetchInventoryData();
   }, [user]);
 
-  // Update Firestore and state when inventory changes
+  // Update Firestore and state
   const updateInventoryData = async (newData) => {
     if (!user) return;
     try {
@@ -89,71 +98,188 @@ const InventoryManager = () => {
     }
   };
 
-  // Handler for Add Stock form submission
+  // Add Stock Handler
   const handleAddStock = async (e) => {
     e.preventDefault();
+
     if (
       !newStock.name.trim() ||
       !newStock.stock ||
       !newStock.minStock ||
-      !newStock.category.trim()
+      !newStock.category.trim() ||
+      !newStock.minSellingPrice
     ) {
       alert("Please fill all fields.");
       return;
     }
 
-    // Prepare new stock item object
+    if (Number(newStock.minSellingPrice) <= 0) {
+      alert("Minimum Selling Price must be greater than 0.");
+      return;
+    }
+
+    // Prepare new stock item with minSellingPrice included
     const stockItem = {
       name: newStock.name.trim(),
       stock: Number(newStock.stock),
       minStock: Number(newStock.minStock),
       category: newStock.category.trim(),
+      minSellingPrice: Number(newStock.minSellingPrice),
       lastUpdated: "Just now",
     };
 
-    // Add new stock item to lowStockItems array
     const updatedLowStockItems = [...inventoryData.lowStockItems, stockItem];
 
-    // Append recentActivity entry
+    // Activity log entry with amount info (minSellingPrice * quantity added)
+    const addedAmount = stockItem.minSellingPrice * stockItem.stock;
+
     const newActivity = {
       action: "Stock Added",
       item: stockItem.name,
       quantity: `+${stockItem.stock}`,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      amount: `₹${addedAmount.toLocaleString()}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       type: "add",
     };
-    const updatedRecentActivity = [
-      newActivity,
-      ...inventoryData.recentActivity,
-    ];
 
-    // Optionally, update topProducts as needed; left unchanged here
+    const updatedRecentActivity = [newActivity, ...inventoryData.recentActivity];
+
     const newInventoryData = {
       ...inventoryData,
       lowStockItems: updatedLowStockItems,
       recentActivity: updatedRecentActivity,
-      // topProducts: inventoryData.topProducts,
     };
 
     await updateInventoryData(newInventoryData);
 
     // Reset form and hide it
-    setNewStock({ name: "", stock: "", minStock: "", category: "" });
+    setNewStock({ name: "", stock: "", minStock: "", category: "", minSellingPrice: "" });
     setShowAddStockForm(false);
+  };
+
+  // Remove item handler (no amount since it's just removed)
+  const handleRemoveItem = async (index) => {
+    const updatedLowStockItems = [...inventoryData.lowStockItems];
+    const removedItem = updatedLowStockItems.splice(index, 1)[0];
+
+    const removeActivity = {
+      action: "Removed",
+      item: removedItem.name,
+      quantity: `0`,
+      amount: "-",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "remove",
+    };
+
+    const updatedRecentActivity = [removeActivity, ...inventoryData.recentActivity];
+
+    await updateInventoryData({
+      ...inventoryData,
+      lowStockItems: updatedLowStockItems,
+      recentActivity: updatedRecentActivity,
+    });
+  };
+
+  // Confirm Sale Handler - with qty and amount input
+  const handleConfirmSale = async (index) => {
+    const item = inventoryData.lowStockItems[index];
+    const qty = Number(soldQuantity);
+    const amount = Number(soldAmount);
+
+    if (!qty || qty <= 0) {
+      alert("Please enter a valid quantity sold.");
+      return;
+    }
+    if (qty > item.stock) {
+      alert("Sold quantity cannot exceed current stock.");
+      return;
+    }
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid sale amount.");
+      return;
+    }
+
+    // Update low stock items array:
+    let updatedLowStockItems = [...inventoryData.lowStockItems];
+    if (qty === item.stock) {
+      // Sold entire stock, remove item
+      updatedLowStockItems.splice(index, 1);
+    } else {
+      // Reduce stock and update lastUpdated
+      updatedLowStockItems[index] = {
+        ...item,
+        stock: item.stock - qty,
+        lastUpdated: "Just now",
+      };
+    }
+
+    // Update topProducts
+    let updatedTopProducts = [...(inventoryData.topProducts || [])];
+    const existingProductIdx = updatedTopProducts.findIndex((p) => p.name === item.name);
+
+    if (existingProductIdx >= 0) {
+      const oldRevenueStr = updatedTopProducts[existingProductIdx].revenue || "₹0";
+      const oldRevenueNum = Number(oldRevenueStr.replace(/[^\d]/g, "")) || 0;
+
+      updatedTopProducts[existingProductIdx] = {
+        ...updatedTopProducts[existingProductIdx],
+        sold: (updatedTopProducts[existingProductIdx].sold || 0) + qty,
+        revenue: `₹${(oldRevenueNum + amount).toLocaleString()}`,
+        trend: "▲",
+      };
+    } else {
+      updatedTopProducts.push({
+        name: item.name,
+        sold: qty,
+        revenue: `₹${amount.toLocaleString()}`,
+        trend: "▲",
+      });
+    }
+
+    // Update today's sales by adding the sale amount
+    const prevSalesStr = inventoryData.todaysSales || "₹0";
+    const prevSalesAmount = Number(prevSalesStr.replace(/[^\d]/g, "")) || 0;
+    const newTodaysSales = prevSalesAmount + amount;
+    const newTodaysSalesStr = `₹${newTodaysSales.toLocaleString()}`;
+
+    // Activity log with quantity and amount
+    const soldActivity = {
+      action: "Sold",
+      item: item.name,
+      quantity: `-${qty}`,
+      amount: `₹${amount.toLocaleString()}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "sale",
+    };
+
+    const updatedRecentActivity = [soldActivity, ...inventoryData.recentActivity];
+
+    // Update all in Firestore & state
+    await updateInventoryData({
+      ...inventoryData,
+      lowStockItems: updatedLowStockItems,
+      recentActivity: updatedRecentActivity,
+      topProducts: updatedTopProducts,
+      todaysSales: newTodaysSalesStr,
+    });
+
+    // Reset form states
+    setSellingItemIndex(null);
+    setSoldQuantity("");
+    setSoldAmount("");
   };
 
   if (loading) {
     return (
-      <div className="text-center p-8 text-gray-500">
-        Loading inventory data...
-      </div>
+      <div className="text-center p-8 text-gray-500">Loading inventory data...</div>
     );
   }
 
-  const { lowStockItems, recentActivity, topProducts } = inventoryData;
+  const { lowStockItems, recentActivity, topProducts, todaysSales } = inventoryData;
+
+  const sortedTopProducts = [...(topProducts || [])].sort(
+    (a, b) => (b.sold || 0) - (a.sold || 0)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50">
@@ -173,15 +299,11 @@ const InventoryManager = () => {
               </Link>
               <div className="text-2xl">📦</div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Inventory Manager
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900">Inventory Manager</h1>
                 <p className="text-sm text-gray-500">इन्वेंटरी प्रबंधक</p>
               </div>
             </div>
-            <Badge className="bg-orange-100 text-orange-700">
-              🟢 Online | ऑनलाइन
-            </Badge>
+            <Badge className="bg-orange-100 text-orange-700">🟢 Online | ऑनलाइन</Badge>
           </div>
         </div>
       </header>
@@ -193,11 +315,7 @@ const InventoryManager = () => {
             { id: "overview", label: "Overview", labelHindi: "अवलोकन" },
             { id: "low-stock", label: "Low Stock", labelHindi: "कम स्टॉक" },
             { id: "activity", label: "Activity", labelHindi: "गतिविधि" },
-            {
-              id: "products",
-              label: "Top Products",
-              labelHindi: "मुख्य उत्पाद",
-            },
+            { id: "products", label: "Top Products", labelHindi: "मुख्य उत्पाद" },
           ].map((tab) => (
             <Button
               key={tab.id}
@@ -215,6 +333,7 @@ const InventoryManager = () => {
             </Button>
           ))}
         </div>
+
         {/* Overview Tab */}
         {selectedTab === "overview" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -224,23 +343,13 @@ const InventoryManager = () => {
                 <CardTitle className="text-sm font-medium text-gray-600">
                   Total Products
                 </CardTitle>
-                <CardTitle className="text-xs text-gray-500">
-                  कुल उत्पाद
-                </CardTitle>
+                <CardTitle className="text-xs text-gray-500">कुल उत्पाद</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
                   {topProducts && topProducts.length > 0
-                    ? topProducts.reduce(
-                        (acc, prod) => acc + (prod.sold || 0),
-                        0
-                      )
+                    ? topProducts.reduce((acc, prod) => acc + (prod.sold || 0), 0)
                     : 0}
-                </div>
-                <div className="text-xs text-green-600 flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +2.5% from last month{" "}
-                  {/* You can customize this dynamically if you have data */}
                 </div>
               </CardContent>
             </Card>
@@ -251,9 +360,7 @@ const InventoryManager = () => {
                 <CardTitle className="text-sm font-medium text-gray-600">
                   Low Stock Items
                 </CardTitle>
-                <CardTitle className="text-xs text-gray-500">
-                  कम स्टॉक
-                </CardTitle>
+                <CardTitle className="text-xs text-gray-500">कम स्टॉक</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
@@ -272,42 +379,18 @@ const InventoryManager = () => {
                 <CardTitle className="text-sm font-medium text-gray-600">
                   Today's Sales
                 </CardTitle>
-                <CardTitle className="text-xs text-gray-500">
-                  आज की बिक्री
-                </CardTitle>
+                <CardTitle className="text-xs text-gray-500">आज की बिक्री</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">
-                  {/* Replace 0 with your dynamic sales value or keep a placeholder */}
-                  {inventoryData.todaysSales ?? "₹0"}
+                  {todaysSales ?? "₹0"}
                 </div>
-                <div className="text-xs text-green-600">
-                  {/* Replace or remove */}
-                  +8.2% from yesterday
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pending Orders */}
-            <Card className="border-orange-100">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Pending Orders
-                </CardTitle>
-                <CardTitle className="text-xs text-gray-500">
-                  लंबित आदेश
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {inventoryData.pendingOrders ?? 0}
-                </div>
-                <div className="text-xs text-gray-600">To be fulfilled</div>
               </CardContent>
             </Card>
           </div>
         )}
-        {/* Low stock alerts and form */}
+
+        {/* Low Stock Tab */}
         {selectedTab === "low-stock" && (
           <>
             <div className="flex justify-between items-center mb-4">
@@ -316,13 +399,17 @@ const InventoryManager = () => {
               </h2>
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
-                onClick={() => setShowAddStockForm(!showAddStockForm)}
+                onClick={() => {
+                  setShowAddStockForm(!showAddStockForm);
+                  setSellingItemIndex(null); // close selling form if open
+                }}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {showAddStockForm ? "Cancel" : "Add Stock"}
               </Button>
             </div>
 
+            {/* Add Stock Form with Min Selling Price */}
             {showAddStockForm && (
               <form
                 onSubmit={handleAddStock}
@@ -402,6 +489,26 @@ const InventoryManager = () => {
                     required
                   />
                 </div>
+                <div>
+                  <label
+                    htmlFor="minSellingPrice"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Minimum Selling Price (₹)
+                  </label>
+                  <input
+                    id="minSellingPrice"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={newStock.minSellingPrice}
+                    onChange={(e) =>
+                      setNewStock({ ...newStock, minSellingPrice: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+                    required
+                  />
+                </div>
 
                 <Button
                   type="submit"
@@ -412,23 +519,22 @@ const InventoryManager = () => {
               </form>
             )}
 
-            {/* Existing Low Stock Items */}
+            {/* Low Stock Items List */}
             <div className="grid gap-4">
               {lowStockItems.map((item, index) => (
                 <Card key={index} className="border-red-200 bg-red-50">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {item.name}
-                        </h3>
+                        <h3 className="font-semibold text-gray-900">{item.name}</h3>
                         <p className="text-sm text-gray-600">{item.category}</p>
                         <div className="flex items-center space-x-4 mt-2">
-                          <Badge variant="destructive">
-                            Current: {item.stock}
-                          </Badge>
+                          <Badge variant="destructive">Current: {item.stock}</Badge>
                           <span className="text-sm text-gray-600">
                             Min Required: {item.minStock}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            Min Sell Price: ₹{item.minSellingPrice?.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -437,17 +543,84 @@ const InventoryManager = () => {
                           size="sm"
                           variant="outline"
                           className="border-orange-200"
+                          title="Mark as Sold"
+                          onClick={() => {
+                            setSellingItemIndex(sellingItemIndex === index ? null : index);
+                            setSoldQuantity("");
+                            setSoldAmount("");
+                            setShowAddStockForm(false); // close add stock form if open
+                          }}
                         >
-                          <Eye className="h-4 w-4" />
+                          <TrendingUp className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
-                          className="bg-orange-500 hover:bg-orange-600"
+                          variant="destructive"
+                          title="Remove"
+                          onClick={() => handleRemoveItem(index)}
                         >
-                          <Edit className="h-4 w-4" />
+                          X
                         </Button>
                       </div>
                     </div>
+
+                    {/* Sell Form */}
+                    {sellingItemIndex === index && (
+                      <form
+                        className="mt-2 p-4 bg-white border rounded shadow-sm space-y-4"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleConfirmSale(index);
+                        }}
+                      >
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Quantity Sold
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.stock}
+                            value={soldQuantity}
+                            onChange={(e) => setSoldQuantity(e.target.value)}
+                            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Sale Amount (₹)
+                          </label>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={soldAmount}
+                            onChange={(e) => setSoldAmount(e.target.value)}
+                            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+                            required
+                          />
+                        </div>
+
+                        <div className="flex space-x-2">
+                          <Button
+                            type="submit"
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Confirm Sale
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setSellingItemIndex(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+
                     <p className="text-xs text-gray-500 mt-2">
                       Last updated: {item.lastUpdated}
                     </p>
@@ -457,6 +630,7 @@ const InventoryManager = () => {
             </div>
           </>
         )}
+
         {/* Activity Tab */}
         {selectedTab === "activity" && (
           <div className="space-y-4">
@@ -477,19 +651,17 @@ const InventoryManager = () => {
                               ? "bg-blue-500"
                               : activity.type === "alert"
                               ? "bg-red-500"
+                              : activity.type === "remove"
+                              ? "bg-gray-500"
                               : "bg-gray-500"
                           }`}
                         />
                         <div>
-                          <p className="font-medium text-gray-900">
-                            {activity.action}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {activity.item}
-                          </p>
+                          <p className="font-medium text-gray-900">{activity.action}</p>
+                          <p className="text-sm text-gray-600">{activity.item}</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right space-y-0.5">
                         <p
                           className={`font-medium ${
                             activity.quantity.includes("+")
@@ -501,6 +673,10 @@ const InventoryManager = () => {
                         >
                           {activity.quantity}
                         </p>
+                        {/* Show amount if available */}
+                        <p className="text-xs text-gray-500">
+                          {activity.amount ? `Amount: ${activity.amount}` : null}
+                        </p>
                         <p className="text-xs text-gray-500">{activity.time}</p>
                       </div>
                     </div>
@@ -510,6 +686,7 @@ const InventoryManager = () => {
             </div>
           </div>
         )}
+
         {/* Top Products Tab */}
         {selectedTab === "products" && (
           <div className="space-y-4">
@@ -517,14 +694,12 @@ const InventoryManager = () => {
               Top Selling Products | सबसे ज्यादा बिकने वाले उत्पाद
             </h2>
             <div className="grid gap-4">
-              {topProducts.map((product, index) => (
+              {sortedTopProducts.map((product, index) => (
                 <Card key={index} className="border-orange-100">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {product.name}
-                        </h3>
+                        <h3 className="font-semibold text-gray-900">{product.name}</h3>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-sm text-gray-600">
                             Sold: {product.sold} units
@@ -534,9 +709,7 @@ const InventoryManager = () => {
                           </span>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-700">
-                        {product.trend}
-                      </Badge>
+                      <Badge className="bg-green-100 text-green-700">{product.trend}</Badge>
                     </div>
                   </CardContent>
                 </Card>
