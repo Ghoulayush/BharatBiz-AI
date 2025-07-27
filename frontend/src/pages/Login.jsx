@@ -65,7 +65,7 @@ export default function Login({ setToken }) {
         localStorage.setItem("token", token);
         setEmail("");
         setPassword("");
-        navigate("/dashboard");
+        navigate("/");
       }
     } catch (err) {
       setError(err.message);
@@ -85,7 +85,7 @@ export default function Login({ setToken }) {
       const token = await user.getIdToken();
       setToken(token);
       localStorage.setItem("token", token);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,10 +106,10 @@ export default function Login({ setToken }) {
         <div className="bg-white p-8 rounded shadow-md w-full max-w-md text-center">
           <h2 className="text-2xl font-bold mb-6">You are already logged in</h2>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/")}
             className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
           >
-            Go to Dashboard
+            Go to Home
           </button>
           <button
             onClick={handleLogout}
