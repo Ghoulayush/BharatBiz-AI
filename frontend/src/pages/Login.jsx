@@ -1,119 +1,126 @@
-// import { useState } from "react";
-// import axios from "axios";
-
-// export default function Login({ setToken }) {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [isSignup, setIsSignup] = useState(false);
-//   const [error, setError] = useState("");
-
-//   const handleAuth = async () => {
-//     const route = isSignup ? "/signup" : "/login";
-
-//     try {
-//       const res = await axios.post(
-//         `http://localhost:8080${route}`,
-//         {
-//           email,
-//           password,
-//         }
-//       );
-//       localStorage.setItem("token", res.data.token);
-//       setToken(res.data.token);
-//     } catch (err) {
-//       setError(err.response?.data?.detail || "Authentication failed");
-
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-green-100">
-//       <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
-//         <h1 className="text-3xl font-bold mb-6 text-center text-orange-600">
-//           {isSignup ? "Create an Account" : "Welcome Back"}
-//         </h1>
-
-//         {error && (
-//           <div className="mb-4 text-sm text-red-600 text-center">
-//             {error}
-//           </div>
-//         )}
-
-//         <div className="space-y-4">
-//           <input
-//             placeholder="Email"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
-//           />
-//           <input
-//             placeholder="Password"
-//             type="password"
-//             value={password}
-//             onChange={(e) => setPassword(e.target.value)}
-//             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
-//           />
-
-//           <button
-//             onClick={handleAuth}
-//             className="w-full bg-gradient-to-r from-orange-400 to-green-500 text-white font-semibold py-3 rounded-lg hover:from-orange-500 hover:to-green-600 transition"
-//           >
-//             {isSignup ? "Sign Up" : "Sign In"}
-//           </button>
-
-//           <p className="text-center text-sm text-gray-600">
-//             {isSignup ? "Already have an account?" : "New here?"}{" "}
-//             <span
-//               className="text-orange-600 font-semibold cursor-pointer"
-//               onClick={() => setIsSignup(!isSignup)}
-//             >
-//               {isSignup ? "Sign In" : "Sign Up"}
-//             </span>
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function Login({ setToken }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if token exists in localStorage on component mount
+    const token = localStorage.getItem("token");
+    if (token) {
+      setAlreadyLoggedIn(true);
+    }
+  }, []);
+
+  const saveUserToFirestore = async (user) => {
+    const userRef = doc(db, "users", user.uid);
+    // Merge true to avoid overwriting existing data accidentally
+    await setDoc(
+      userRef,
+      {
+        uid: user.uid,
+        email: user.email,
+        createdAt: new Date().toISOString(),
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+      },
+      { merge: true }
+    );
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
     setError("");
-
-    const endpoint = isSignup ? "/signup" : "/login";
+    setLoading(true);
 
     try {
-      const res = await axios.post(`http://localhost:8080${endpoint}`, {
-        email,
-        password,
-      });
+      let userCredential;
 
-      if (res.data.token) {
-        setToken(res.data.token);
-        localStorage.setItem("token", res.data.token);
-        navigate("/dashboard");
-      } else {
+      if (isSignup) {
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await saveUserToFirestore(userCredential.user);
         alert("Signup successful! You can now log in.");
+        setEmail("");
+        setPassword("");
         setIsSignup(false);
+      } else {
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await userCredential.user.getIdToken();
+        setToken(token);
+        localStorage.setItem("token", token);
+        setEmail("");
+        setPassword("");
+        navigate("/dashboard");
       }
     } catch (err) {
-      console.error(err);
-      setError(
-        err.response?.data?.detail || "Authentication failed"
-      );
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await saveUserToFirestore(user);
+      const token = await user.getIdToken();
+      setToken(token);
+      localStorage.setItem("token", token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setAlreadyLoggedIn(false);
+    auth.signOut();
+  };
+
+  if (alreadyLoggedIn) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="bg-white p-8 rounded shadow-md w-full max-w-md text-center">
+          <h2 className="text-2xl font-bold mb-6">You are already logged in</h2>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </button>
+          <button
+            onClick={handleLogout}
+            className="ml-4 bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -122,9 +129,7 @@ export default function Login({ setToken }) {
           {isSignup ? "Sign Up" : "Login"}
         </h2>
 
-        {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
 
         <form onSubmit={handleAuth}>
           <input
@@ -148,18 +153,26 @@ export default function Login({ setToken }) {
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            disabled={loading}
           >
-            {isSignup ? "Sign Up" : "Login"}
+            {loading ? "Processing..." : isSignup ? "Sign Up" : "Login"}
           </button>
         </form>
 
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full mt-4 bg-red-600 text-white py-2 rounded hover:bg-red-700"
+        >
+          {loading ? "Processing..." : "Sign in with Google"}
+        </button>
+
         <p className="mt-4 text-center text-sm">
-          {isSignup
-            ? "Already have an account?"
-            : "Don't have an account?"}{" "}
+          {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             onClick={() => setIsSignup(!isSignup)}
             className="text-blue-600 hover:underline"
+            disabled={loading}
           >
             {isSignup ? "Login here" : "Sign up here"}
           </button>
