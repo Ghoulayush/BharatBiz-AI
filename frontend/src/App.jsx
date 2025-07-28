@@ -52,7 +52,7 @@ import InventoryManager from "./pages/InventoryManager";
 import BusinessCoordinator from "./pages/BusinessCoordinator";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import Products from "./pages/Products";
+
 
 
 
@@ -73,7 +73,6 @@ const App = () => {
             <Route path="/inventory-manager" element={<InventoryManager />} />
             <Route path="/business-coordinator" element={<BusinessCoordinator />} />
             <Route path="/login" element={<Login setToken={setToken} />} />
-            <Route path="/products" element={<Products />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
