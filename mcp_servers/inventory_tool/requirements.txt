@@ -1,0 +1,11 @@
+fastapi>=0.104.1
+uvicorn>=0.24.0
+pydantic>=2.7.4
+python-dotenv>=1.0.0
+langchain>=0.1.0
+langchain-cerebras>=0.5.0
+langchain-pinecone>=0.1.0
+langchain-huggingface>=0.1.0
+pinecone-client>=3.0.0
+transformers>=4.35.0
+torch>=2.1.0

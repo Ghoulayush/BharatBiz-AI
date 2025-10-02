@@ -1,0 +1,11 @@
+python-dotenv>=1.0.0
+langchain>=0.0.325
+langchain-core>=0.0.9
+pinecone-client>=2.2.4
+langchain-pinecone>=0.0.3
+langchain-community>=0.0.6
+langchain-cerebras
+sentence-transformers>=2.2.2
+fastapi>=0.104.0
+uvicorn>=0.23.2
+logging>=0.5.1.2

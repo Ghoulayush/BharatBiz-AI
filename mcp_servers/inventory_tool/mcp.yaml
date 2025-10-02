@@ -1,0 +1,3 @@
+# mcp_servers/inventory_tool/mcp.yaml
+name: inventory-checker
+description: A tool to check product inventory levels for BharatBiz.

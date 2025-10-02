@@ -24,6 +24,7 @@ export default function Chat({ embedded = false }) {
   const [message, setMessage] = useState("");
   const [language, setLanguage] = useState("en");
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [uid, setUid] = useState(null);
   const messagesEndRef = useRef(null);
@@ -131,52 +132,66 @@ export default function Chat({ embedded = false }) {
     return language === "hi" ? "यह आपकी मदद के लिए एक उत्तर है।" : "This is a reply to assist you.";
   };
 
-  // Handle sending message and storing everything in Firestore directly
-  const handleSendMessage = async () => {
-    if (message.trim() && uid) {
-      // User message
-      const newMsg = {
-        id: chatMessages.length + 1,
-        sender: "user",
-        text: message,
-        textEng: message,
+  // Handle sending message to the AI agent
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
+    if (!message.trim() || !uid) return;
+
+    const userMessage = {
+      id: chatMessages.length + 1,
+      sender: "user",
+      text: message,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    // Add user message to the chat and clear the input
+    const updatedMessages = [...chatMessages, userMessage];
+    setChatMessages(updatedMessages);
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      // Send user message to the backend AI agent
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: userMessage.text }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const agentAnswer = data.answer;
+
+      const agentMessage = {
+        id: updatedMessages.length + 1,
+        sender: "agent",
+        text: agentAnswer,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        agent: null
+        agent: selectedAgent,
       };
 
-      // Update messages state & clear input
-      const updatedMessages = [...chatMessages, newMsg];
-      setChatMessages(updatedMessages);
-      setMessage("");
-      setIsTyping(true);
+      // Add agent's response to the chat
+      const finalMessages = [...updatedMessages, agentMessage];
+      setChatMessages(finalMessages);
 
-      try {
-        // Save user message immediately
-        await saveChatMessages(updatedMessages);
-
-        // Simulate agent reply with delay (1 second)
-        const replyText = getSimulatedAgentReply(message);
-
-        const reply = {
-          id: updatedMessages.length + 1,
-          sender: "agent",
-          text: replyText,
-          textEng: replyText,  // since it's already bilingual
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          agent: selectedAgent
-        };
-
-        const updatedWithReply = [...updatedMessages, reply];
-
-        setTimeout(async () => {
-          setChatMessages(updatedWithReply);
-          await saveChatMessages(updatedWithReply);
-          setIsTyping(false);
-        }, 1000);
-      } catch (err) {
-        console.error("Error saving messages:", err);
-        setIsTyping(false);
-      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      // Optionally, add an error message to the chat
+      const errorMessage = {
+        id: updatedMessages.length + 1,
+        sender: "agent",
+        text: "Sorry, I'm having trouble connecting. Please try again later.",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        agent: selectedAgent,
+      };
+      setChatMessages([...updatedMessages, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -302,18 +317,22 @@ export default function Chat({ embedded = false }) {
         </ScrollArea>
 
         <div className={`bg-white border-t border-gray-200 p-4 ${embedded ? "rounded-b-lg" : ""}`}>
-          <div className="flex items-center space-x-2">
+          <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
             <Input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={language === "hi" ? "मैसेज लिखें..." : "Type a message..."}
               className="flex-1"
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              disabled={isLoading} // Disable input while loading
             />
-            <Button onClick={handleSendMessage} className="bg-orange-500 hover:bg-orange-600">
-              <Send className="w-4 h-4" />
+            <Button type="submit" className="bg-orange-500 hover:bg-orange-600" disabled={isLoading}>
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
-          </div>
+          </form>
           <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
             <span>{language === "hi" ? "Enter दबाएं या Send बटन क्लिक करें" : "Press Enter or click Send button"}</span>
             <span>{language === "hi" ? "भाषा: हिंदी" : "Language: English"}</span>
